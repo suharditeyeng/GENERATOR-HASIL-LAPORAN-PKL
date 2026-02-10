@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generator Laporan PKL Mahasiswa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --primary: #1a365d;
+      --secondary: #2d3748;
+      --accent: #2b6cb0;
+      --accent-light: #4299e1;
+      --light: #f7fafc;
+      --paper: #fffef7;
+      --dark: #1a202c;
+      --gray: #718096;
+      --border-radius: 8px;
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+      color: var(--dark);
+      line-height: 1.6;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 25px;
+      background: var(--primary);
+      border-radius: var(--border-radius);
+      color: white;
+      box-shadow: var(--shadow);
+      position: relative;
+      border-bottom: 5px solid var(--accent);
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      max-width: 800px;
+      margin: 0 auto;
+      font-style: italic;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 30px;
+    }
+    
+    @media (max-width: 992px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .form-section, .output-section {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 30px;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .form-section:hover {
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+    }
+    
+    .section-title {
+      display: flex;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--accent);
+      color: var(--primary);
+    }
+    
+    .section-title i {
+      margin-right: 12px;
+      font-size: 1.5rem;
+    }
+    
+    .section-title h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--secondary);
+      font-size: 1rem;
+    }
+    
+    .form-group label i {
+      margin-right: 10px;
+      color: var(--accent);
+      width: 20px;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #cbd5e0;
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: var(--transition);
+      background-color: #fdfdfd;
+      font-family: 'Times New Roman', Times, serif;
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.1);
+    }
+    
+    textarea.form-control {
+      min-height: 120px;
+      resize: vertical;
+    }
+    
+    .btn-generate {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(to right, var(--primary), var(--accent));
+      color: white;
+      border: none;
+      border-radius: var(--border-radius);
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 10px;
+      box-shadow: 0 5px 15px rgba(26, 54, 93, 0.3);
+      font-family: 'Times New Roman', Times, serif;
+    }
+    
+    .btn-generate:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(26, 54, 93, 0.4);
+    }
+    
+    .btn-generate:active {
+      transform: translateY(0);
+    }
+    
+    .btn-generate i {
+      margin-right: 10px;
+      font-size: 1.2rem;
+    }
+    
+    /* STYLING LAPORAN SEPERTI MAKALAH */
+    .paper-container {
+      background-color: var(--paper);
+      padding: 40px;
+      border-radius: 2px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      min-height: 800px;
+      position: relative;
+      border: 1px solid #ddd;
+    }
+    
+    .paper-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--primary);
+    }
+    
+    .paper-title {
+      font-size: 18pt;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .paper-subtitle {
+      font-size: 14pt;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: var(--secondary);
+    }
+    
+    .paper-logo {
+      width: 80px;
+      height: 80px;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 15px;
+      font-size: 2rem;
+    }
+    
+    .chapter {
+      margin-bottom: 30px;
+      page-break-inside: avoid;
+    }
+    
+    .chapter-title {
+      font-size: 14pt;
+      font-weight: bold;
+      margin-bottom: 15px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #ddd;
+      text-transform: uppercase;
+    }
+    
+    .chapter-subtitle {
+      font-size: 12pt;
+      font-weight: bold;
+      margin: 15px 0 10px;
+      color: var(--secondary);
+    }
+    
+    .content {
+      font-size: 11pt;
+      line-height: 1.8;
+      text-align: justify;
+      margin-bottom: 15px;
+    }
+    
+    .content p {
+      margin-bottom: 10px;
+      text-indent: 30px;
+    }
+    
+    .table-data {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 11pt;
+    }
+    
+    .table-data th, .table-data td {
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    
+    .table-data th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+    
+    .signature-area {
+      margin-top: 50px;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .signature-box {
+      width: 45%;
+      text-align: center;
+    }
+    
+    .signature-line {
+      margin-top: 60px;
+      border-top: 1px solid #000;
+      width: 80%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .footer-note {
+      font-size: 10pt;
+      text-align: center;
+      margin-top: 30px;
+      color: var(--gray);
+      font-style: italic;
+      border-top: 1px dashed #ddd;
+      padding-top: 15px;
+    }
+    
+    /* Control Buttons */
+    .output-controls {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+    
+    .btn-control {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      flex: 1;
+      justify-content: center;
+      font-family: 'Times New Roman', Times, serif;
+    }
+    
+    .btn-control:hover {
+      background-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    
+    .btn-control i {
+      margin-right: 8px;
+    }
+    
+    .btn-pdf {
+      background-color: #e53e3e;
+    }
+    
+    .btn-pdf:hover {
+      background-color: #c53030;
+    }
+    
+    .btn-print {
+      background-color: var(--secondary);
+    }
+    
+    .btn-print:hover {
+      background-color: #4a5568;
+    }
+    
+    .word-count {
+      display: block;
+      text-align: right;
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-top: 5px;
+    }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      background-color: #38a169;
+      color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      transform: translateX(150%);
+      transition: transform 0.4s ease;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      font-family: 'Times New Roman', Times, serif;
+    }
+    
+    .notification.show {
+      transform: translateX(0);
+    }
+    
+    .notification i {
+      margin-right: 10px;
+      font-size: 1.2rem;
+    }
+    
+    .required::after {
+      content: " *";
+      color: #e53e3e;
+    }
+    
+    .page-break {
+      page-break-before: always;
+    }
+    
+    @media print {
+      .form-section, .output-controls, .header, .footer {
+        display: none !important;
+      }
+      
+      .paper-container {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+      }
+      
+      body {
+        background: white;
+        padding: 0;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.8rem;
+      }
+      
+      .header p {
+        font-size: 1rem;
+      }
+      
+      .form-section, .output-section {
+        padding: 20px;
+      }
+      
+      .container {
+        gap: 20px;
+      }
+      
+      .paper-container {
+        padding: 20px;
+      }
+      
+      .output-controls {
+        flex-direction: column;
+      }
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      color: var(--gray);
+      font-size: 0.9rem;
+      font-family: 'Times New Roman', Times, serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><i class="fas fa-graduation-cap"></i> Generator Laporan PKL SUHARDI</h1>
+    <p>Alat untuk membuat laporan Praktik Kerja Lapangan (PKL) dengan format makalah akademik yang profesional</p>
+  </div>
+  
+  <div class="container">
+    <section class="form-section">
+      <div class="section-title">
+        <i class="fas fa-edit"></i>
+        <h2>Formulir Data PKL</h2>
+      </div>
+      
+      <div class="form-group">
+        <label for="nama" class="required"><i class="fas fa-user"></i> Nama Mahasiswa</label>
+        <input type="text" id="nama" class="form-control" placeholder="Masukkan nama lengkap">
+      </div>
+      
+      <div class="form-group">
+        <label for="nim" class="required"><i class="fas fa-id-card"></i> NIM</label>
+        <input type="text" id="nim" class="form-control" placeholder="Masukkan Nomor Induk Mahasiswa">
+      </div>
+      
+      <div class="form-group">
+        <label for="kampus" class="required"><i class="fas fa-university"></i> Universitas / Fakultas / Prodi</label>
+        <input type="text" id="kampus" class="form-control" placeholder="Contoh: Universitas Contoh - Fakultas Teknik - Teknik Informatika">
+      </div>
+      
+      <div class="form-group">
+        <label for="tempat" class="required"><i class="fas fa-building"></i> Instansi / Perusahaan PKL</label>
+        <input type="text" id="tempat" class="form-control" placeholder="Nama instansi tempat PKL">
+      </div>
+      
+      <div class="form-group">
+        <label for="waktu" class="required"><i class="fas fa-calendar-alt"></i> Waktu PKL</label>
+        <input type="text" id="waktu" class="form-control" placeholder="Contoh: Januari – Maret 2025">
+      </div>
+      
+      <div class="form-group">
+        <label for="latar" class="required"><i class="fas fa-book-open"></i> Latar Belakang</label>
+        <textarea id="latar" class="form-control" placeholder="Jelaskan latar belakang dilaksanakannya PKL..."></textarea>
+        <span class="word-count" id="latar-count">0 kata</span>
+      </div>
+      
+      <div class="form-group">
+        <label for="masalah" class="required"><i class="fas fa-question-circle"></i> Rumusan Masalah</label>
+        <textarea id="masalah" class="form-control" placeholder="Rumusan masalah yang akan dibahas dalam PKL..."></textarea>
+        <span class="word-count" id="masalah-count">0 kata</span>
+      </div>
+      
+      <div class="form-group">
+        <label for="tujuan" class="required"><i class="fas fa-bullseye"></i> Tujuan dan Manfaat PKL</label>
+        <textarea id="tujuan" class="form-control" placeholder="Tujuan dan manfaat yang ingin dicapai melalui PKL..."></textarea>
+        <span class="word-count" id="tujuan-count">0 kata</span>
+      </div>
+      
+      <div class="form-group">
+        <label for="kegiatan" class="required"><i class="fas fa-tasks"></i> Deskripsi Kegiatan PKL</label>
+        <textarea id="kegiatan" class="form-control" placeholder="Deskripsi kegiatan yang dilakukan selama PKL..."></textarea>
+        <span class="word-count" id="kegiatan-count">0 kata</span>
+      </div>
+      
+      <button class="btn-generate" onclick="generateReport()">
+        <i class="fas fa-file-alt"></i> Generate Laporan PKL
+      </button>
+    </section>
+    
+    <section class="output-section">
+      <div class="section-title">
+        <i class="fas fa-file-pdf"></i>
+        <h2>Laporan PKL Format Makalah</h2>
+      </div>
+      
+      <div class="output-controls">
+        <button class="btn-control" onclick="downloadPDF()">
+          <i class="fas fa-file-pdf"></i> Download PDF
+        </button>
+        <button class="btn-control btn-print" onclick="printReport()">
+          <i class="fas fa-print"></i> Cetak Laporan
+        </button>
+        <button class="btn-control" onclick="copyToClipboard()">
+          <i class="fas fa-copy"></i> Salin Teks
+        </button>
+      </div>
+      
+      <div class="paper-container" id="paper-container">
+        <div id="report-content">
+          <div class="paper-header">
+            <div class="paper-logo">
+              <i class="fas fa-university"></i>
+            </div>
+            <h1 class="paper-title">Laporan Praktik Kerja Lapangan</h1>
+            <h2 class="paper-subtitle">(PKL) Mahasiswa</h2>
+            <p style="font-size: 11pt; margin-top: 10px;">Isi formulir di sebelah kiri dan klik "Generate Laporan PKL" untuk membuat laporan</p>
+          </div>
+          
+          <div class="chapter">
+            <p class="content" style="text-align: center; font-style: italic;">
+              Laporan ini disusun untuk memenuhi salah satu syarat kelulusan mata kuliah Praktik Kerja Lapangan (PKL)
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="footer">
+    <p>© 2023 Generator Laporan PKL Mahasiswa | Format Makalah Akademik | Download PDF Tersedia</p>
+  </div>
+  
+  <div class="notification" id="notification">
+    <i class="fas fa-check-circle"></i>
+    <span id="notification-text">Teks berhasil disalin ke clipboard!</span>
+  </div>
+
+  <script>
+    // Inisialisasi jsPDF
+    const { jsPDF } = window.jspdf;
+    
+    // Fungsi untuk menghitung jumlah kata
+    function countWords(text) {
+      return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+    }
+    
+    // Fungsi untuk update word count
+    function updateWordCount(textareaId, countId) {
+      const textarea = document.getElementById(textareaId);
+      const countElement = document.getElementById(countId);
+      
+      textarea.addEventListener('input', function() {
+        const wordCount = countWords(this.value);
+        countElement.textContent = `${wordCount} kata`;
+      });
+    }
+    
+    // Inisialisasi word count untuk setiap textarea
+    document.addEventListener('DOMContentLoaded', function() {
+      updateWordCount('latar', 'latar-count');
+      updateWordCount('masalah', 'masalah-count');
+      updateWordCount('tujuan', 'tujuan-count');
+      updateWordCount('kegiatan', 'kegiatan-count');
+    });
+    
+    // Fungsi untuk menampilkan notifikasi
+    function showNotification(message, isSuccess = true) {
+      const notification = document.getElementById('notification');
+      const notificationText = document.getElementById('notification-text');
+      
+      notificationText.textContent = message;
+      
+      if (isSuccess) {
+        notification.style.backgroundColor = '#38a169';
+      } else {
+        notification.style.backgroundColor = '#e53e3e';
+      }
+      
+      notification.classList.add('show');
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+    
+    // Fungsi untuk menyalin teks ke clipboard
+    function copyToClipboard() {
+      const reportContent = document.getElementById('report-content');
+      const textToCopy = reportContent.innerText;
+      
+      if (textToCopy.includes("Isi formulir di sebelah kiri")) {
+        showNotification("Buat laporan terlebih dahulu sebelum menyalin", false);
+        return;
+      }
+      
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+          showNotification("Laporan berhasil disalin ke clipboard!");
+        })
+        .catch(err => {
+          console.error('Gagal menyalin teks: ', err);
+          showNotification("Gagal menyalin teks ke clipboard", false);
+        });
+    }
+    
+    // Fungsi untuk print laporan
+    function printReport() {
+      const reportContent = document.getElementById('report-content');
+      
+      if (reportContent.innerHTML.includes("Isi formulir di sebelah kiri")) {
+        showNotification("Buat laporan terlebih dahulu sebelum mencetak", false);
+        return;
+      }
+      
+      window.print();
+    }
+    
+    // Fungsi untuk download PDF
+    async function downloadPDF() {
+      const reportContent = document.getElementById('report-content');
+      
+      if (reportContent.innerHTML.includes("Isi formulir di sebelah kiri")) {
+        showNotification("Buat laporan terlebih dahulu sebelum mendownload", false);
+        return;
+      }
+      
+      showNotification("Membuat PDF, harap tunggu...", true);
+      
+      try {
+        // Buat elemen sementara untuk rendering
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.width = '794px'; // A4 width in pixels at 96 DPI
+        tempContainer.style.backgroundColor = 'white';
+        tempContainer.style.padding = '40px';
+        tempContainer.style.fontFamily = "'Times New Roman', Times, serif";
+        
+        // Clone konten laporan
+        const contentClone = reportContent.cloneNode(true);
+        tempContainer.appendChild(contentClone);
+        document.body.appendChild(tempContainer);
+        
+        // Konversi ke canvas
+        const canvas = await html2canvas(tempContainer, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        });
+        
+        // Hapus elemen sementara
+        document.body.removeChild(tempContainer);
+        
+        // Buat PDF
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pdfWidth;
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        let heightLeft = imgHeight;
+        let position = 0;
+        
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+        
+        // Tambahkan halaman jika konten terlalu panjang
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight;
+        }
+        
+        // Download PDF
+        const nama = document.getElementById('nama').value || 'Laporan_PKL';
+        pdf.save(`Laporan_PKL_${nama.replace(/\s+/g, '_')}.pdf`);
+        
+        showNotification("PDF berhasil didownload!");
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        showNotification("Gagal membuat PDF", false);
+      }
+    }
+    
+    // Fungsi utama untuk generate laporan
+    function generateReport() {
+      const nama = document.getElementById('nama').value;
+      const nim = document.getElementById('nim').value;
+      const kampus = document.getElementById('kampus').value;
+      const tempat = document.getElementById('tempat').value;
+      const waktu = document.getElementById('waktu').value;
+      const latar = document.getElementById('latar').value;
+      const masalah = document.getElementById('masalah').value;
+      const tujuan = document.getElementById('tujuan').value;
+      const kegiatan = document.getElementById('kegiatan').value;
+      
+      // Validasi input wajib
+      if (!nama || !nim || !kampus || !tempat || !waktu || !latar || !masalah || !tujuan || !kegiatan) {
+        showNotification("Harap isi semua field yang wajib diisi!", false);
+        return;
+      }
+      
+      // Parse kampus untuk fakultas dan prodi
+      const kampusParts = kampus.split('-').map(part => part.trim());
+      const universitas = kampusParts[0] || kampus;
+      const fakultas = kampusParts[1] || "Fakultas";
+      const prodi = kampusParts[2] || "Program Studi";
+      
+      // Buat konten laporan dalam format makalah
+      const reportContent = document.getElementById('report-content');
+      reportContent.innerHTML = `
+        <div class="paper-header">
+          <div class="paper-logo">
+            <i class="fas fa-university"></i>
+          </div>
+          <h1 class="paper-title">LAPORAN PRAKTIK KERJA LAPANGAN</h1>
+          <h2 class="paper-subtitle">(PKL) MAHASISWA</h2>
+          <p style="font-size: 12pt; margin-top: 20px;">Disusun untuk memenuhi salah satu syarat kelulusan mata kuliah<br>Praktik Kerja Lapangan (PKL)</p>
+        </div>
+        
+        <div class="chapter">
+          <table class="table-data">
+            <tr>
+              <th width="30%">Nama Mahasiswa</th>
+              <td width="70%">${nama}</td>
+            </tr>
+            <tr>
+              <th>NIM</th>
+              <td>${nim}</td>
+            </tr>
+            <tr>
+              <th>Universitas</th>
+              <td>${universitas}</td>
+            </tr>
+            <tr>
+              <th>Fakultas</th>
+              <td>${fakultas}</td>
+            </tr>
+            <tr>
+              <th>Program Studi</th>
+              <td>${prodi}</td>
+            </tr>
+            <tr>
+              <th>Instansi PKL</th>
+              <td>${tempat}</td>
+            </tr>
+            <tr>
+              <th>Waktu PKL</th>
+              <td>${waktu}</td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="page-break"></div>
+        
+        <div class="chapter">
+          <h2 class="chapter-title">BAB I<br>PENDAHULUAN</h2>
+          
+          <h3 class="chapter-subtitle">1.1 Latar Belakang</h3>
+          <div class="content">
+            <p>${formatParagraphs(latar)}</p>
+          </div>
+          
+          <h3 class="chapter-subtitle">1.2 Rumusan Masalah</h3>
+          <div class="content">
+            <p>${formatParagraphs(masalah)}</p>
+          </div>
+        </div>
+        
+        <div class="chapter">
+          <h2 class="chapter-title">BAB II<br>TUJUAN DAN MANFAAT PKL</h2>
+          <div class="content">
+            <p>${formatParagraphs(tujuan)}</p>
+          </div>
+        </div>
+        
+        <div class="chapter">
+          <h2 class="chapter-title">BAB III<br>PELAKSANAAN PKL</h2>
+          <div class="content">
+            <p>${formatParagraphs(kegiatan)}</p>
+          </div>
+        </div>
+        
+        <div class="chapter">
+          <h2 class="chapter-title">BAB IV<br>PENUTUP</h2>
+          
+          <h3 class="chapter-subtitle">4.1 Kesimpulan</h3>
+          <div class="content">
+            <p>Kegiatan Praktik Kerja Lapangan (PKL) memberikan pengalaman nyata bagi mahasiswa dalam menerapkan teori perkuliahan ke dunia kerja. Selama pelaksanaan PKL di ${tempat}, mahasiswa dapat meningkatkan kompetensi teknis dan non-teknis, serta menambah wawasan profesional di bidang yang digeluti. Pengalaman ini sangat berharga untuk mempersiapkan mahasiswa memasuki dunia kerja setelah menyelesaikan studi.</p>
+          </div>
+          
+          <h3 class="chapter-subtitle">4.2 Saran</h3>
+          <div class="content">
+            <p>Berdasarkan pengalaman selama pelaksanaan PKL, terdapat beberapa saran yang dapat dipertimbangkan:</p>
+            <p>1. Perlunya sinergi yang lebih kuat antara kurikulum akademik dengan kebutuhan dunia kerja.</p>
+            <p>2. Peningkatan intensitas program PKL untuk memberikan pengalaman yang lebih mendalam.</p>
+            <p>3. Pembimbingan yang lebih intensif dari pihak universitas dan instansi tempat PKL.</p>
+            <p>4. Evaluasi berkala terhadap pelaksanaan PKL untuk perbaikan berkelanjutan.</p>
+          </div>
+        </div>
+        
+        <div class="signature-area">
+          <div class="signature-box">
+            <p>Mengetahui,</p>
+            <p>Pembimbing Instansi</p>
+            <div class="signature-line"></div>
+            <p style="margin-top: 5px;">(____________________)</p>
+            <p>NIP/NIK: ___________________</p>
+          </div>
+          
+          <div class="signature-box">
+            <p>${tempat}, ${getCurrentDate()}</p>
+            <p>Mahasiswa PKL</p>
+            <div class="signature-line"></div>
+            <p style="margin-top: 5px;">(${nama})</p>
+            <p>NIM: ${nim}</p>
+          </div>
+        </div>
+        
+        <div class="footer-note">
+          <p>Laporan ini disusun dengan sebenar-benarnya berdasarkan data dan kegiatan yang dilakukan selama Praktik Kerja Lapangan (PKL).</p>
+          <p>© ${new Date().getFullYear()} - ${universitas}</p>
+        </div>
+      `;
+      
+      showNotification("Laporan PKL berhasil dibuat dalam format makalah!");
+    }
+    
+    // Fungsi untuk memformat paragraf
+    function formatParagraphs(text) {
+      return text.split('\n').filter(p => p.trim()).map(p => p.trim()).join('</p><p>');
+    }
+    
+    // Fungsi untuk mendapatkan tanggal sekarang
+    function getCurrentDate() {
+      const now = new Date();
+      const options = { day: 'numeric', month: 'long', year: 'numeric' };
+      return now.toLocaleDateString('id-ID', options);
+    }
+  </script>
+</body>
+</html>
